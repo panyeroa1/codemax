@@ -232,3 +232,61 @@ Test result:
 
 Known limitations or follow-up tasks:
 - None
+
+------------------------------------------------------------
+STANDARD TASK BLOCK
+------------------------------------------------------------
+
+Task ID: T-0005
+Title: Fix React Type Errors
+Status: DONE
+Owner: Miles
+Related repo or service: codemax
+Branch: main
+Created: 2026-02-07 22:15
+Last updated: 2026-02-07 22:20
+
+START LOG
+
+Timestamp: 2026-02-07 22:15
+Current behavior or state:
+- TypeScript compiler reports `implicitly has an 'any' type` for React and JSX elements using imports.
+- `package.json` was missing `@types/react` and `@types/react-dom`.
+- `tsconfig.json` had a restricted `types` list.
+
+Plan and scope for this task:
+- Install `@types/react` and `@types/react-dom`.
+- Update `tsconfig.json` to include these types.
+
+Files or modules expected to change:
+- package.json
+- package-lock.json
+- tsconfig.json
+
+Risks or things to watch out for:
+- None
+
+WORK CHECKLIST
+
+- [x] Install missing type definitions
+- [x] Update tsconfig.json
+
+END LOG
+
+Timestamp: 2026-02-07 22:20
+Summary of what actually changed:
+- Installed `@types/react` and `@types/react-dom` as dev dependencies.
+- Updated `tsconfig.json` to explicitly include `react` and `react-dom` in the `types` array.
+
+Files actually modified:
+- package.json
+- tsconfig.json
+
+How it was tested:
+- Ran `npm run build` which completed successfully with no type errors.
+
+Test result:
+- PASS
+
+Known limitations or follow-up tasks:
+- None
