@@ -232,6 +232,7 @@ const App: React.FC = () => {
           <button
             onClick={() => setSidebarOpen(true)}
             className="absolute left-4 top-4 z-50 p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-6 border border-zinc-200 dark:border-zinc-800 shadow-sm"
+            aria-label="Open sidebar"
           >
             <ChatBubbleLeftRightIcon className="w-5 h-5" />
           </button>
@@ -379,13 +380,14 @@ const App: React.FC = () => {
                   </button>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <button onClick={() => fileInputRef.current?.click()} className="p-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
+                  <button onClick={() => fileInputRef.current?.click()} className="p-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors" aria-label="Upload image">
                     <PhotoIcon className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => handleSend()}
                     disabled={isGenerating || !input.trim()}
                     className="p-2.5 bg-zinc-900 dark:bg-[#34343a] text-white disabled:opacity-20 rounded-full transition-all shadow-xl active:scale-90"
+                    aria-label="Send message"
                   >
                     <ArrowUpIcon className="w-5 h-5" />
                   </button>
@@ -408,7 +410,7 @@ const App: React.FC = () => {
                 <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white uppercase">Admin Control</h2>
                 <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">Ollama Logic Configuration</p>
               </div>
-              <button onClick={() => setShowAdmin(false)} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-6"><XMarkIcon className="w-5 h-5" /></button>
+              <button onClick={() => setShowAdmin(false)} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-6" aria-label="Close admin settings"><XMarkIcon className="w-5 h-5" /></button>
             </div>
 
             <div className="space-y-6">
