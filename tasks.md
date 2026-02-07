@@ -57,3 +57,40 @@ Test result:
 
 Known limitations or follow-up tasks:
 - None
+
+------------------------------------------------------------
+STANDARD TASK BLOCK
+------------------------------------------------------------
+
+Task ID: T-0002
+Title: Fix tsconfig settings
+Status: IN-PROGRESS
+Owner: Miles
+Related repo or service: codemax
+Branch: main
+Created: 2026-02-07 20:25
+Last updated: 2026-02-07 20:25
+
+START LOG
+
+Timestamp: 2026-02-07 20:25
+Current behavior or state:
+- `tsconfig.json` is missing `strict` and `forceConsistentCasingInFileNames` options.
+- IDE reports errors/warnings suggesting these should be enabled.
+
+Plan and scope for this task:
+- Enable `strict: true` in `compilerOptions`.
+- Enable `forceConsistentCasingInFileNames: true` in `compilerOptions`.
+
+Files or modules expected to change:
+- tsconfig.json
+
+Risks or things to watch out for:
+- Enabling `strict` might expose existing type errors in the codebase.
+
+WORK CHECKLIST
+
+- [ ] Code changes implemented according to the defined scope
+- [ ] No unrelated refactors or drive-by changes
+- [ ] Configuration and environment variables verified
+- [ ] Logs and error handling reviewed
