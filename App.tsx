@@ -172,7 +172,7 @@ const App: React.FC = () => {
               </div>
               <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest ml-7 -mt-1">CodeMax</span>
             </div>
-            <button onClick={() => setSidebarOpen(false)} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-6 transition-all">
+            <button onClick={() => setSidebarOpen(false)} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-6 transition-all" aria-label="Close sidebar">
               <XMarkIcon className="w-4 h-4" />
             </button>
           </div>
@@ -272,7 +272,7 @@ const App: React.FC = () => {
             </h2>
           </div>
           <div className="flex items-center space-x-2">
-            <button className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-6 transition-all">
+            <button className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-6 transition-all" aria-label="Share">
               <ShareIcon className="w-4 h-4" />
             </button>
           </div>
@@ -455,7 +455,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <input type="file" ref={fileInputRef} className="hidden" accept="image/*,application/pdf" onChange={(e) => {
+      <input type="file" ref={fileInputRef} className="hidden" accept="image/*,application/pdf" aria-label="File upload" title="File upload" onChange={(e) => {
         const file = e.target.files?.[0];
         if (file) {
           const reader = new FileReader();

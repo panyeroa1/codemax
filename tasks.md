@@ -175,3 +175,42 @@ Test result:
 
 Known limitations or follow-up tasks:
 - None
+
+------------------------------------------------------------
+STANDARD TASK BLOCK
+------------------------------------------------------------
+
+Task ID: T-0004
+Title: Fix Accessibility Issues in App.tsx
+Status: IN-PROGRESS
+Owner: Miles
+Related repo or service: codemax
+Branch: main
+Created: 2026-02-07 21:56
+Last updated: 2026-02-07 21:56
+
+START LOG
+
+Timestamp: 2026-02-07 21:56
+Current behavior or state:
+- Several buttons and inputs in `App.tsx` are missing `aria-label` or `title` attributes, causing accessibility lint errors.
+- Users relying on screen readers cannot discern the function of these elements.
+
+Plan and scope for this task:
+- Add `aria-label` or `title` attributes to the identified buttons and inputs in `App.tsx`.
+
+Files or modules expected to change:
+- App.tsx
+
+Risks or things to watch out for:
+- None
+
+WORK CHECKLIST
+
+- [ ] Add labels to sidebar toggle buttons
+- [ ] Add label to share button
+- [ ] Add label to file upload button and input
+- [ ] Add label to send message button
+- [ ] Add label to admin close button
+
+END LOG
