@@ -64,7 +64,7 @@ STANDARD TASK BLOCK
 
 Task ID: T-0002
 Title: Fix tsconfig settings
-Status: IN-PROGRESS
+Status: DONE
 Owner: Miles
 Related repo or service: codemax
 Branch: main
@@ -90,7 +90,26 @@ Risks or things to watch out for:
 
 WORK CHECKLIST
 
-- [ ] Code changes implemented according to the defined scope
-- [ ] No unrelated refactors or drive-by changes
-- [ ] Configuration and environment variables verified
-- [ ] Logs and error handling reviewed
+- [x] Code changes implemented according to the defined scope
+- [x] No unrelated refactors or drive-by changes
+- [x] Configuration and environment variables verified
+- [x] Logs and error handling reviewed
+
+END LOG
+
+Timestamp: 2026-02-07 20:25
+Summary of what actually changed:
+- Enabled `strict` in `compilerOptions` in `tsconfig.json`.
+- Enabled `forceConsistentCasingInFileNames` in `compilerOptions` in `tsconfig.json`.
+
+Files actually modified:
+- tsconfig.json
+
+How it was tested:
+- Ran `npm run build` which passed successfully.
+
+Test result:
+- PASS
+
+Known limitations or follow-up tasks:
+- None
