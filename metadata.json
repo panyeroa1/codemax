@@ -1,0 +1,7 @@
+{
+  "name": "Eburon CodeMax 1.3",
+  "description": "Premium self-verifying coding intelligence platform with minimalist aesthetic.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
