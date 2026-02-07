@@ -8,9 +8,9 @@ import { Logo } from './components/Logo';
 import { LivePreview } from './components/LivePreview';
 import { Creation } from './components/CreationHistory';
 import { MODELS, Message, chatStream, chatOllamaStream } from './services/gemini';
-import { 
-  PaperAirplaneIcon, 
-  CommandLineIcon, 
+import {
+  PaperAirplaneIcon,
+  CommandLineIcon,
   XMarkIcon,
   CodeBracketSquareIcon,
   ClipboardIcon,
@@ -37,7 +37,7 @@ declare const hljs: any;
 const App: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [activeModel, setActiveModel] = useState(MODELS.CODEMAX_PRO);
+  const [activeModel, setActiveModel] = useState(MODELS.POLYAMA_CLOUD);
   const [isGenerating, setIsGenerating] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [pendingImage, setPendingImage] = useState<{ data: string; mimeType: string } | null>(null);
@@ -46,7 +46,7 @@ const App: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [deepThink, setDeepThink] = useState(false);
-  
+
   // Admin / Ollama States
   const [showAdmin, setShowAdmin] = useState(false);
   const [ollamaUrl, setOllamaUrl] = useState('http://localhost:11434');
@@ -113,7 +113,7 @@ const App: React.FC = () => {
       setMessages(prev => [...prev, { role: 'model', parts: [{ text: "" }], modelName: activeModel }]);
 
       const isOllama = ollamaModels.includes(activeModel);
-      
+
       if (isOllama) {
         await chatOllamaStream(ollamaUrl, activeModel, [...messages, userMessage], (chunk) => {
           setMessages(prev => {
@@ -141,7 +141,7 @@ const App: React.FC = () => {
         setActiveCreation(newCreation);
       }
     } catch (err) {
-      setMessages(prev => [...prev, { role: 'model', parts: [{ text: "System execution failure. Check model connectivity." }] }]);
+      setMessages(prev => [...prev, { role: 'model', parts: [{ text: `System execution failure: ${err instanceof Error ? err.message : String(err)}` }] }]);
     } finally {
       setIsGenerating(false);
     }
@@ -160,7 +160,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-[100dvh] bg-white dark:bg-[#0e0e11] text-zinc-900 dark:text-[#d1d1d1] font-sans transition-colors duration-300">
-      
+
       {/* Sidebar */}
       <aside className={`flex flex-col border-r border-zinc-200 dark:border-zinc-800 transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-0 overflow-hidden'}`}>
         <div className="p-4 flex flex-col space-y-1">
@@ -177,7 +177,7 @@ const App: React.FC = () => {
             </button>
           </div>
 
-          <button 
+          <button
             onClick={() => { setMessages([]); setActiveCreation(null); }}
             className="w-full py-2 px-4 bg-zinc-100 dark:bg-[#1c1c1f] hover:bg-zinc-200 dark:hover:bg-[#252529] rounded-6 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center space-x-2 transition-all mb-4"
           >
@@ -190,8 +190,8 @@ const App: React.FC = () => {
           <div className="space-y-1">
             <h3 className="px-2 text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-2">History</h3>
             {creationHistory.map(item => (
-              <button 
-                key={item.id} 
+              <button
+                key={item.id}
                 onClick={() => setActiveCreation(item)}
                 className="w-full text-left px-3 py-2 text-sm rounded-6 hover:bg-zinc-100 dark:hover:bg-[#1c1c1f] truncate transition-colors"
               >
@@ -202,14 +202,14 @@ const App: React.FC = () => {
         </div>
 
         <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 space-y-1">
-          <button 
+          <button
             onClick={() => setShowAdmin(true)}
             className="w-full flex items-center space-x-3 px-3 py-2 text-sm rounded-6 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           >
             <AdjustmentsHorizontalIcon className="w-4 h-4" />
             <span>Admin Settings</span>
           </button>
-          <button 
+          <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             className="w-full flex items-center space-x-3 px-3 py-2 text-sm rounded-6 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           >
@@ -229,7 +229,7 @@ const App: React.FC = () => {
       {/* Main Container */}
       <main className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0e0e11] relative">
         {!sidebarOpen && (
-          <button 
+          <button
             onClick={() => setSidebarOpen(true)}
             className="absolute left-4 top-4 z-50 p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-6 border border-zinc-200 dark:border-zinc-800 shadow-sm"
           >
@@ -240,31 +240,31 @@ const App: React.FC = () => {
         {/* Model Selector Top Bar */}
         <header className="h-14 border-b border-zinc-100 dark:border-zinc-800/50 flex items-center px-6 shrink-0 bg-white/50 dark:bg-[#0e0e11]/50 backdrop-blur-md z-30">
           <div className="flex items-center space-x-4">
-             <div className="relative group">
-                <button className="flex items-center space-x-2 px-3 py-1.5 rounded-6 bg-zinc-50 dark:bg-[#1c1c1f] border border-zinc-200 dark:border-zinc-800 text-xs font-bold uppercase tracking-tight hover:border-zinc-400 dark:hover:border-zinc-600 transition-all">
-                  <span>{Object.entries(MODELS).find(([_,v]) => v === activeModel)?.[0] || activeModel}</span>
-                  <ChevronDownIcon className="w-3 h-3" />
-                </button>
-                <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-[#1c1c1f] border border-zinc-200 dark:border-zinc-800 rounded-6 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1">
-                  <div className="px-3 py-1 text-[9px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100 dark:border-zinc-800 mb-1">Standard</div>
-                  {Object.entries(MODELS).map(([k, v]) => (
-                    <button key={k} onClick={() => setActiveModel(v)} className="w-full text-left px-3 py-2 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800/50">
-                      {k.replace('_', ' ')}
-                    </button>
-                  ))}
-                  {ollamaModels.length > 0 && (
-                    <>
-                      <div className="px-3 py-1 text-[9px] font-bold text-blue-400 uppercase tracking-widest border-b border-zinc-100 dark:border-zinc-800 my-1">Local Ollama</div>
-                      {ollamaModels.map(m => (
-                        <button key={m} onClick={() => setActiveModel(m)} className="w-full text-left px-3 py-2 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800/50 flex items-center justify-between">
-                          <span>{m}</span>
-                          <SignalIcon className="w-3 h-3 text-emerald-500" />
-                        </button>
-                      ))}
-                    </>
-                  )}
-                </div>
-             </div>
+            <div className="relative group">
+              <button className="flex items-center space-x-2 px-3 py-1.5 rounded-6 bg-zinc-50 dark:bg-[#1c1c1f] border border-zinc-200 dark:border-zinc-800 text-xs font-bold uppercase tracking-tight hover:border-zinc-400 dark:hover:border-zinc-600 transition-all">
+                <span>{Object.entries(MODELS).find(([_, v]) => v === activeModel)?.[0] || activeModel}</span>
+                <ChevronDownIcon className="w-3 h-3" />
+              </button>
+              <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-[#1c1c1f] border border-zinc-200 dark:border-zinc-800 rounded-6 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1">
+                <div className="px-3 py-1 text-[9px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100 dark:border-zinc-800 mb-1">Standard</div>
+                {Object.entries(MODELS).map(([k, v]) => (
+                  <button key={k} onClick={() => setActiveModel(v)} className="w-full text-left px-3 py-2 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800/50">
+                    {k.replace('_', ' ')}
+                  </button>
+                ))}
+                {ollamaModels.length > 0 && (
+                  <>
+                    <div className="px-3 py-1 text-[9px] font-bold text-blue-400 uppercase tracking-widest border-b border-zinc-100 dark:border-zinc-800 my-1">Local Ollama</div>
+                    {ollamaModels.map(m => (
+                      <button key={m} onClick={() => setActiveModel(m)} className="w-full text-left px-3 py-2 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800/50 flex items-center justify-between">
+                        <span>{m}</span>
+                        <SignalIcon className="w-3 h-3 text-emerald-500" />
+                      </button>
+                    ))}
+                  </>
+                )}
+              </div>
+            </div>
           </div>
           <div className="flex-1 text-center">
             <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
@@ -302,27 +302,27 @@ const App: React.FC = () => {
                     <div key={pi} className="space-y-4">
                       {part.text && (
                         <div className="font-sans relative">
-                           <div className={`prose prose-sm max-w-none ${theme === 'dark' ? 'prose-invert' : 'prose-zinc'} leading-relaxed`} dangerouslySetInnerHTML={{ __html: typeof marked !== 'undefined' ? marked.parse(part.text) : part.text }} />
-                           
-                           {msg.role === 'model' && extractHtml(part.text) && (
-                             <div className="mt-8 flex items-center justify-between p-5 bg-zinc-50 dark:bg-[#1c1c1f] border border-zinc-200 dark:border-zinc-800 rounded-6 shadow-xl">
-                                <div className="flex items-center space-x-4">
-                                    <div className="p-3 bg-blue-500/10 rounded-6 text-blue-500">
-                                      <CodeBracketSquareIcon className="w-6 h-6" />
-                                    </div>
-                                    <div>
-                                      <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-900 dark:text-white">Architecture Deployment</h4>
-                                      <p className="text-[9px] text-zinc-500 uppercase font-mono tracking-tighter">Verified Integrity Block: v1.3.2</p>
-                                    </div>
+                          <div className={`prose prose-sm max-w-none ${theme === 'dark' ? 'prose-invert' : 'prose-zinc'} leading-relaxed`} dangerouslySetInnerHTML={{ __html: typeof marked !== 'undefined' ? marked.parse(part.text) : part.text }} />
+
+                          {msg.role === 'model' && extractHtml(part.text) && (
+                            <div className="mt-8 flex items-center justify-between p-5 bg-zinc-50 dark:bg-[#1c1c1f] border border-zinc-200 dark:border-zinc-800 rounded-6 shadow-xl">
+                              <div className="flex items-center space-x-4">
+                                <div className="p-3 bg-blue-500/10 rounded-6 text-blue-500">
+                                  <CodeBracketSquareIcon className="w-6 h-6" />
                                 </div>
-                                <button onClick={() => { const h = extractHtml(part.text!); if (h) setActiveCreation({ id: 'temp', name: 'Verified Preview', html: h, timestamp: new Date() }); }} className="px-6 py-3 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-6 font-black text-[10px] uppercase tracking-tighter hover:opacity-90 transition-all shadow-lg active:scale-95">Preview Build</button>
-                             </div>
-                           )}
+                                <div>
+                                  <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-900 dark:text-white">Architecture Deployment</h4>
+                                  <p className="text-[9px] text-zinc-500 uppercase font-mono tracking-tighter">Verified Integrity Block: v1.3.2</p>
+                                </div>
+                              </div>
+                              <button onClick={() => { const h = extractHtml(part.text!); if (h) setActiveCreation({ id: 'temp', name: 'Verified Preview', html: h, timestamp: new Date() }); }} className="px-6 py-3 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-6 font-black text-[10px] uppercase tracking-tighter hover:opacity-90 transition-all shadow-lg active:scale-95">Preview Build</button>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
                   ))}
-                  
+
                   {msg.role === 'model' && !isGenerating && (
                     <div className="flex items-center space-x-6 mt-8 text-zinc-400 border-t border-zinc-100 dark:border-zinc-800 pt-4">
                       <button onClick={() => handleCopyCode(msg.parts[0].text!, i)} className="flex items-center space-x-2 hover:text-zinc-900 dark:hover:text-white transition-colors">
@@ -356,7 +356,7 @@ const App: React.FC = () => {
         <div className="px-6 pb-8 shrink-0">
           <div className="max-w-3xl mx-auto">
             <div className="relative bg-zinc-50 dark:bg-[#1c1c1f] border border-zinc-200 dark:border-zinc-800 rounded-[24px] p-4 shadow-2xl transition-all focus-within:ring-1 focus-within:ring-zinc-400 dark:focus-within:ring-zinc-600 focus-within:bg-white dark:focus-within:bg-[#202024]">
-              <textarea 
+              <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
@@ -366,7 +366,7 @@ const App: React.FC = () => {
               />
               <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800/50">
                 <div className="flex items-center space-x-2">
-                  <button 
+                  <button
                     onClick={() => setDeepThink(!deepThink)}
                     className={`flex items-center space-x-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest transition-all ${deepThink ? 'bg-blue-600 border-blue-600 text-white shadow-lg' : 'bg-transparent border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:border-zinc-400'}`}
                   >
@@ -382,7 +382,7 @@ const App: React.FC = () => {
                   <button onClick={() => fileInputRef.current?.click()} className="p-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
                     <PhotoIcon className="w-5 h-5" />
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleSend()}
                     disabled={isGenerating || !input.trim()}
                     className="p-2.5 bg-zinc-900 dark:bg-[#34343a] text-white disabled:opacity-20 rounded-full transition-all shadow-xl active:scale-90"
@@ -402,56 +402,56 @@ const App: React.FC = () => {
       {/* Admin Settings Modal */}
       {showAdmin && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-           <div className="w-full max-w-md bg-white dark:bg-[#1c1c1f] border border-zinc-200 dark:border-zinc-800 rounded-6 p-8 shadow-[0_32px_128px_rgba(0,0,0,0.5)]">
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                   <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white uppercase">Admin Control</h2>
-                   <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">Ollama Logic Configuration</p>
-                </div>
-                <button onClick={() => setShowAdmin(false)} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-6"><XMarkIcon className="w-5 h-5"/></button>
+          <div className="w-full max-w-md bg-white dark:bg-[#1c1c1f] border border-zinc-200 dark:border-zinc-800 rounded-6 p-8 shadow-[0_32px_128px_rgba(0,0,0,0.5)]">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white uppercase">Admin Control</h2>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">Ollama Logic Configuration</p>
+              </div>
+              <button onClick={() => setShowAdmin(false)} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-6"><XMarkIcon className="w-5 h-5" /></button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Ollama API Endpoint</label>
+                <input
+                  type="text"
+                  value={ollamaUrl}
+                  onChange={(e) => setOllamaUrl(e.target.value)}
+                  className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-6 px-4 py-3 text-sm focus:ring-1 focus:ring-blue-500 transition-all"
+                  placeholder="http://localhost:11434"
+                />
               </div>
 
-              <div className="space-y-6">
-                <div className="space-y-2">
-                   <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Ollama API Endpoint</label>
-                   <input 
-                    type="text" 
-                    value={ollamaUrl} 
-                    onChange={(e) => setOllamaUrl(e.target.value)}
-                    className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-6 px-4 py-3 text-sm focus:ring-1 focus:ring-blue-500 transition-all"
-                    placeholder="http://localhost:11434"
-                   />
-                </div>
+              <button
+                onClick={detectOllamaModels}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-6 font-black text-xs uppercase tracking-widest shadow-xl transition-all flex items-center justify-center space-x-2 active:scale-[0.98]"
+              >
+                <SignalIcon className="w-4 h-4" />
+                <span>Sync Local Models</span>
+              </button>
 
-                <button 
-                  onClick={detectOllamaModels}
-                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-6 font-black text-xs uppercase tracking-widest shadow-xl transition-all flex items-center justify-center space-x-2 active:scale-[0.98]"
-                >
-                  <SignalIcon className="w-4 h-4" />
-                  <span>Sync Local Models</span>
-                </button>
-
-                {ollamaModels.length > 0 && (
-                  <div className="mt-6 p-4 bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-6">
-                     <h3 className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-3 flex items-center space-x-2">
-                        <CheckIcon className="w-3 h-3 text-emerald-500" />
-                        <span>Connected: {ollamaModels.length} Models Found</span>
-                     </h3>
-                     <div className="flex flex-wrap gap-2">
-                        {ollamaModels.map(m => (
-                          <span key={m} className="px-2 py-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-6 text-[10px] font-medium text-zinc-600 dark:text-zinc-400">
-                            {m}
-                          </span>
-                        ))}
-                     </div>
+              {ollamaModels.length > 0 && (
+                <div className="mt-6 p-4 bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-6">
+                  <h3 className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-3 flex items-center space-x-2">
+                    <CheckIcon className="w-3 h-3 text-emerald-500" />
+                    <span>Connected: {ollamaModels.length} Models Found</span>
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {ollamaModels.map(m => (
+                      <span key={m} className="px-2 py-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-6 text-[10px] font-medium text-zinc-600 dark:text-zinc-400">
+                        {m}
+                      </span>
+                    ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+            </div>
 
-              <div className="mt-10 pt-6 border-t border-zinc-100 dark:border-zinc-800">
-                <button onClick={() => setShowAdmin(false)} className="w-full py-3 bg-zinc-100 dark:bg-[#252529] hover:bg-zinc-200 dark:hover:bg-[#2a2a2e] text-zinc-900 dark:text-white rounded-6 font-bold text-xs uppercase transition-all">Close</button>
-              </div>
-           </div>
+            <div className="mt-10 pt-6 border-t border-zinc-100 dark:border-zinc-800">
+              <button onClick={() => setShowAdmin(false)} className="w-full py-3 bg-zinc-100 dark:bg-[#252529] hover:bg-zinc-200 dark:hover:bg-[#2a2a2e] text-zinc-900 dark:text-white rounded-6 font-bold text-xs uppercase transition-all">Close</button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -467,7 +467,7 @@ const App: React.FC = () => {
         }
       }} />
 
-      <LivePreview 
+      <LivePreview
         creation={activeCreation}
         isLoading={isGenerating}
         isFocused={!!activeCreation}

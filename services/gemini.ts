@@ -8,6 +8,7 @@ export const MODELS = {
   CODEMAX_13: 'gpt-oss:120b-cloud',
   CODEMAX_PRO: 'gpt-oss:120b-cloud',
   CODEMAX_BETA: 'gpt-oss:120b-cloud',
+  POLYAMA_CLOUD: 'gpt-oss:120b-cloud',
   GEMMA_3: 'gpt-oss:120b-cloud'
 };
 
@@ -30,10 +31,12 @@ export async function chatStream(
   history: Message[],
   onChunk: (text: string) => void
 ) {
-  const apiKey = import.meta.env.VITE_OLLAMA_API_KEY;
+  const apiKey = import.meta.env.VITE_OLLAMA_API_KEY?.trim();
   if (!apiKey) {
-    throw new Error("VITE_OLLAMA_API_KEY is not set");
+    console.error("VITE_OLLAMA_API_KEY is missing");
+    throw new Error("VITE_OLLAMA_API_KEY is not set. Please check .env.local");
   }
+  console.log("Using Ollama Cloud Key:", apiKey.substring(0, 5) + "...");
 
   const messages = history.map(msg => ({
     role: msg.role === 'model' ? 'assistant' : 'user',
@@ -56,7 +59,13 @@ export async function chatStream(
     })
   });
 
-  if (!response.body) throw new Error("Ollama Cloud stream failed");
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Ollama Cloud Response Error:", response.status, errorText);
+    throw new Error(`Ollama Cloud Error (${response.status}): ${errorText || response.statusText}`);
+  }
+
+  if (!response.body) throw new Error("Ollama Cloud stream failed: No response body");
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
