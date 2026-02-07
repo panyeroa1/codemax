@@ -2,138 +2,169 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import { GoogleGenAI } from "@google/genai";
-
-export const MODELS = {
-  CODEMAX_PRO: "gemini-flash-lite-latest",
-  CODEMAX_ULTRA: "gemini-flash-lite-latest",
-  GEMMA_3_ELITE: "gemini-flash-lite-latest",
-  FLASH_SPEED: "gemini-flash-lite-latest",
-};
+/// <reference types="vite/client" />
 
 export interface Message {
-  role: "user" | "model";
-  parts: { text?: string; inlineData?: { data: string; mimeType: string } }[];
-  modelName?: string;
+  role: 'user' | 'model';
+  parts: { text?: string }[];
 }
 
+export const MODELS = {
+  DEEPSEEK_V3: 'deepseek-v3.1:671b-cloud',
+  GPT_OSS_120B: 'gpt-oss:120b-cloud',
+  GPT_OSS_20B: 'gpt-oss:20b-cloud',
+  QWEN_CODER: 'qwen3-coder:480b-cloud',
+  KIMI_K2: 'kimi-k2:1t-cloud'
+} as const;
+
+export type ModelType = typeof MODELS[keyof typeof MODELS] | string;
+
 const SYSTEM_INSTRUCTION = `
-You are CodeMax Alpha Architect — an elite, production-grade software engineering AI.
+You are CodeMax Alpha Architect — an elite, production-grade software engineering AI powered by Ollama Cloud.
 Your sole job is to generate COMPLETE, correct, runnable code with excellent architecture and UI/UX.
 
 ABSOLUTE OUTPUT RULES (NON-NEGOTIABLE):
 1) CODE ONLY: Output ONLY source code. No explanations, no markdown, no backticks, no commentary, no reasoning.
 2) FULL FILES ALWAYS: Return complete, standalone files. NEVER output partial snippets, diffs, or “only changed lines”.
-3) NO PLACEHOLDERS: Do NOT use TODO, pseudo-code, ellipses (...), “left as exercise”, or missing sections.
-4) STRICT COMPLETENESS:
-   - If asked for an app, include ALL required files (e.g., package.json, tsconfig, vite config, env sample, server/client code, styles).
-   - If asked for a single-file web app, output one complete HTML with embedded CSS + JS.
-   - If asked for React/Next/Node, include every necessary file to build and run.
-5) MULTI-FILE BUNDLING FORMAT:
-   - If more than one file is needed, output them in ONE response as a concatenated bundle.
-   - Each file MUST start with a file header comment exactly like:
-     // FILE: path/to/file.ext
-   - Then immediately the full file content.
-   - No extra text between files.
-6) COMPILATION & RUNTIME SAFETY:
-   - Code must type-check (TypeScript) and run without missing imports.
-   - Use stable APIs and correct library usage.
-   - Include robust error handling and input validation.
-7) PRO-LEVEL QUALITY BAR:
-   - Clean architecture, strong naming, separation of concerns.
-   - Secure defaults (sanitization, auth boundaries, least privilege).
-   - Performance-minded (avoid unnecessary rerenders, efficient data flow).
-   - Accessibility and responsive UI when UI exists.
-8) CONSISTENCY:
-   - Match the user’s stack choices in the prompt.
-   - If unspecified, choose the most reasonable modern defaults and include everything needed.
+3) NO PLACEHOLDERS: Everything must be fully implemented. No "TODO", "rest of code...", or "insert logic here".
+4) PRODUCTION READY:
+   - TypeScript (strict mode)
+   - TailwindCSS (modern utility-first)
+   - Lucide React (icons)
+   - Proper error handling & edge case management
+   - Accessible & responsive UI
+5) BROWSER COMPATIBLE: Use standard Web APIs. No Node.js specific modules (fs, path) unless polyfilled.
+6) FILE STRUCTURE:
+   - React Components: functional, typed props, modular.
+   - Styling: Tailwind utility classes ONLY.
+   - State: React Hooks (useState, useEffect, useReducer).
 
-FAILURE CONDITIONS (DO NOT DO THESE):
-- Any non-code text.
-- Any incomplete file.
-- Any missing required config/boilerplate to run.
-- Any placeholders.
-
-Produce pure, final, production-ready source code only.
+CONTRACT:
+By outputting code, you certify it is 100% complete, bug-free, and ready for deployment.
+Any violation of these rules (e.g. adding markdown, text, or skipping code) triggers a SYSTEM FAILURE.
 `.trim();
 
-export async function chatStream(
-  modelName: string,
-  history: Message[],
-  onChunk: (text: string) => void
-) {
-  const aiClient = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-  const chat = aiClient.chats.create({
-    model: modelName,
-    config: {
-      systemInstruction: SYSTEM_INSTRUCTION,
-      thinkingConfig: { thinkingBudget: 0 },
-    },
-  });
-
-  const lastMessage = history[history.length - 1];
-
-  const response = await chat.sendMessageStream({
-    message: lastMessage.parts,
-  });
-
-  let fullText = "";
-  for await (const chunk of response) {
-    const chunkText = chunk.text || "";
-    fullText += chunkText;
-    onChunk(fullText);
-  }
-  return fullText;
-}
-
-export async function chatOllamaStream(
-  url: string,
-  modelName: string,
-  history: Message[],
-  onChunk: (text: string) => void
-) {
-  const messages = history.map((msg) => ({
-    role: msg.role === "model" ? "assistant" : "user",
-    content: msg.parts.map((p) => p.text).join("\n"),
-  }));
+export async function* chatOllamaStream(model: string, messages: Message[], signal?: AbortSignal, baseUrl?: string): AsyncGenerator<string, void, unknown> {
+  const url = baseUrl || 'http://localhost:11434'; // Default to local Ollama if not specified
 
   const response = await fetch(`${url}/api/chat`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: modelName,
-      messages: [{ role: "system", content: SYSTEM_INSTRUCTION }, ...messages],
+      model: model,
+      messages: messages.map(m => ({
+        role: m.role === 'model' ? 'assistant' : 'user', // Map internal roles to Ollama API
+        content: m.parts.map(p => p.text).join('')
+      })),
       stream: true,
+      options: {
+        temperature: 0.7, // Add some creativity
+        num_predict: -1   // Generate as much as needed
+      }
     }),
+    signal
   });
 
-  if (!response.body) throw new Error("Ollama connection failed.");
+  if (!response.ok) {
+    throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+  }
 
-  const reader = response.body.getReader();
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error('Response body is unavailable');
+
   const decoder = new TextDecoder();
-  let fullText = "";
+  let buffer = '';
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
 
-    const chunk = decoder.decode(value, { stream: true });
-    const lines = chunk.split("\n");
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
 
     for (const line of lines) {
-      if (!line) continue;
+      if (!line.trim()) continue;
       try {
-        const json = JSON.parse(line);
-        if (json.message?.content) {
-          fullText += json.message.content;
-          onChunk(fullText);
+        const data = JSON.parse(line);
+        if (data.message?.content) {
+          yield data.message.content;
         }
-      } catch {
-        // ignore malformed stream lines
+        if (data.done) break;
+      } catch (e) {
+        // Ignore JSON parse errors for incomplete chunks
       }
     }
   }
+}
 
-  return fullText;
+// Unified chat stream function - Defaults to Ollama Cloud
+export async function* chatStream(model: ModelType, messages: Message[], apiKey?: string, signal?: AbortSignal, ollamaUrl?: string): AsyncGenerator<string, void, unknown> {
+  // If specific Ollama URL provided (Local mode), use it
+  if (ollamaUrl) {
+    yield* chatOllamaStream(model, messages, signal, ollamaUrl);
+    return;
+  }
+
+  // Otherwise, use Ollama Cloud 
+  const cloudUrl = 'https://api.ollama.com/v1/chat/completions';
+  const key = apiKey || import.meta.env.VITE_OLLAMA_API_KEY || process.env.OLLAMA_API_KEY;
+
+  if (!key) {
+    throw new Error("OLLAMA_API_KEY is missing for cloud models.");
+  }
+
+  const response = await fetch(cloudUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${key}`
+    },
+    body: JSON.stringify({
+      model: model,
+      messages: [
+        { role: 'system', content: SYSTEM_INSTRUCTION },
+        ...messages.map(m => ({
+          role: m.role === 'model' ? 'assistant' : 'user',
+          content: m.parts.map(p => p.text).join('')
+        }))
+      ],
+      stream: true
+    }),
+    signal
+  });
+
+  if (!response.ok) {
+    // Try to get error details
+    const errorText = await response.text();
+    throw new Error(`Ollama Cloud API Error (${response.status}): ${errorText}`);
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error('Response body is unavailable');
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      if (line.trim() === 'data: [DONE]') return;
+      if (!line.startsWith('data: ')) continue;
+
+      try {
+        const data = JSON.parse(line.slice(6));
+        const content = data.choices?.[0]?.delta?.content;
+        if (content) yield content;
+      } catch (e) {
+        console.error('Error parsing cloud stream chunk', e);
+      }
+    }
+  }
 }
