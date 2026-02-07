@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>AI Coder — Chat with Ollama</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-primary: #0f0f12;
+      --bg-secondary: #18181b;
+      --bg-tertiary: #27272a;
+      --bg-sidebar: #141417;
+      --text-primary: #fafafa;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --user-bubble: #3f3f46;
+      --assistant-bubble: #27272a;
+      --border: #27272a;
+      --success: #22c55e;
+      --error: #ef4444;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Sora", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.25rem;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      gap: 1rem;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      padding: 0.5rem;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      font-size: 1.25rem;
+    }
+
+    .menu-btn:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 1.125rem;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .model-badge {
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 0.2rem 0.5rem;
+      background: var(--bg-tertiary);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .model-badge.connected {
+      color: var(--success);
+      background: rgba(34, 197, 94, 0.15);
+    }
+
+    .model-badge.error {
+      color: var(--error);
+      background: rgba(239, 68, 68, 0.15);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .admin-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      padding: 0.5rem 0.75rem;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      transition: all 0.15s ease;
+    }
+
+    .admin-btn:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    /* Main layout */
+    .main-wrapper {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      transition: transform 0.2s ease, width 0.2s ease;
+    }
+
+    .sidebar.hidden {
+      transform: translateX(-100%);
+      width: 0;
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .new-chat-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      background: var(--bg-tertiary);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .new-chat-btn:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .chat-history {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+
+    .chat-history-item {
+      padding: 0.6rem 0.75rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: background 0.15s ease;
+    }
+
+    .chat-history-item:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .chat-history-item.active {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    /* Chat area */
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .message {
+      display: flex;
+      gap: 1rem;
+      max-width: 48rem;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .message.user {
+      flex-direction: row-reverse;
+    }
+
+    .message-avatar {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .message.user .message-avatar {
+      background: var(--accent);
+    }
+
+    .message.assistant .message-avatar {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+    }
+
+    .message-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .message-role {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .message.user .message-role {
+      text-align: right;
+    }
+
+    .message-text {
+      font-size: 0.95rem;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .message-text code {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.875em;
+      background: var(--bg-tertiary);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+    }
+
+    .message-text pre {
+      background: var(--bg-tertiary);
+      padding: 1rem;
+      border-radius: var(--radius-sm);
+      overflow-x: auto;
+      margin: 0.5rem 0;
+    }
+
+    .message-text pre code {
+      background: none;
+      padding: 0;
+    }
+
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 0.5rem 0;
+    }
+
+    .typing-indicator span {
+      width: 6px;
+      height: 6px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      animation: typing 1.4s infinite ease-in-out;
+    }
+
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typing {
+      0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+      40% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Empty state */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .empty-state h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 0 0 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .empty-state p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin: 0 0 1.5rem;
+      max-width: 400px;
+    }
+
+    /* Input area */
+    .input-area {
+      padding: 1rem 1.5rem 1.5rem;
+      border-top: 1px solid var(--border);
+      background: var(--bg-primary);
+    }
+
+    .input-wrapper {
+      max-width: 48rem;
+      margin: 0 auto;
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      gap: 0.75rem;
+    }
+
+    .input-box {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .input-box:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+
+    textarea.input-field {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      resize: none;
+      min-height: 24px;
+      max-height: 200px;
+      padding: 0;
+    }
+
+    textarea.input-field::placeholder {
+      color: var(--text-muted);
+    }
+
+    textarea.input-field:focus {
+      outline: none;
+    }
+
+    .send-btn {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      border-radius: var(--radius-sm);
+      background: var(--accent);
+      border: none;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      transition: background 0.15s ease;
+    }
+
+    .send-btn:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Admin modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 1rem;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+
+    .modal-overlay.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 420px;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: scale(0.95);
+      transition: transform 0.2s ease;
+    }
+
+    .modal-overlay.visible .modal {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.25rem;
+      font-size: 1.25rem;
+      border-radius: var(--radius-sm);
+    }
+
+    .modal-close:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .form-group select {
+      cursor: pointer;
+    }
+
+    .form-group small {
+      display: block;
+      margin-top: 0.35rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .detect-btn {
+      margin-top: 0.5rem;
+      padding: 0.4rem 0.75rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .detect-btn:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      padding: 0.6rem 1.25rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: none;
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 50;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+      }
+
+      .sidebar.hidden {
+        transform: translateX(-100%);
+      }
+
+      .menu-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .model-badge {
+        max-width: 100px;
+      }
+
+      .messages {
+        padding: 1rem;
+      }
+
+      .message {
+        max-width: 100%;
+      }
+
+      .input-area {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-left">
+        <button type="button" class="menu-btn" id="menuBtn" aria-label="Toggle sidebar">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div class="logo">
+          <i class="fas fa-robot"></i>
+          AI Coder
+        </div>
+        <span class="model-badge" id="modelBadge">Detecting...</span>
+      </div>
+      <div class="header-right">
+        <button type="button" class="admin-btn" id="adminBtn" aria-label="Settings">
+          <i class="fas fa-cog"></i>
+        </button>
+      </div>
+    </header>
+
+    <div class="main-wrapper">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <button type="button" class="new-chat-btn" id="newChatBtn">
+            <i class="fas fa-plus"></i>
+            New chat
+          </button>
+        </div>
+        <div class="chat-history" id="chatHistory"></div>
+      </aside>
+
+      <main class="chat-area">
+        <div class="messages" id="messages">
+          <div class="empty-state" id="emptyState">
+            <div class="empty-state-icon">
+              <i class="fas fa-comments"></i>
+            </div>
+            <h2>How can I help you today?</h2>
+            <p>Ask me anything. I'm powered by your local Ollama model.</p>
+          </div>
+        </div>
+        <div class="input-area">
+          <div class="input-wrapper">
+            <div class="input-box">
+              <textarea
+                class="input-field"
+                id="userInput"
+                placeholder="Message AI Coder..."
+                rows="1"
+              ></textarea>
+            </div>
+            <button type="button" class="send-btn" id="sendBtn" aria-label="Send">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Admin Settings Modal -->
+  <div class="modal-overlay" id="adminModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-cog"></i> Admin Settings</h3>
+        <button type="button" class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="ollamaUrl">Ollama API Base URL</label>
+          <input type="text" id="ollamaUrl" value="http://localhost:11434" placeholder="http://localhost:11434" />
+          <small>Base URL for your local Ollama instance. Default: http://localhost:11434</small>
+        </div>
+        <div class="form-group">
+          <label for="modelSelect">Model</label>
+          <select id="modelSelect">
+            <option value="">— Detect models —</option>
+          </select>
+          <button type="button" class="detect-btn" id="detectModelsBtn">
+            <i class="fas fa-sync-alt"></i> Detect models
+          </button>
+          <small>Auto-detects models from your Ollama instance.</small>
+        </div>
+        <div class="form-group">
+          <label for="temperature">Temperature</label>
+          <input type="number" id="temperature" min="0" max="2" step="0.1" value="0.7" />
+          <small>Higher = more creative, lower = more focused. Range: 0–2</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="modalCancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="modalSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    const state = {
+      ollamaUrl: localStorage.getItem('ollamaUrl') || 'http://localhost:11434',
+      model: localStorage.getItem('ollamaModel') || '',
+      temperature: parseFloat(localStorage.getItem('ollamaTemperature')) || 0.7,
+      messages: [],
+      isGenerating: false,
+      chatSessions: []
+    };
+
+    // DOM refs
+    const $ = (id) => document.getElementById(id);
+    const menuBtn = $('menuBtn');
+    const sidebar = $('sidebar');
+    const adminBtn = $('adminBtn');
+    const adminModal = $('adminModal');
+    const modalClose = $('modalClose');
+    const modalCancel = $('modalCancel');
+    const modalSave = $('modalSave');
+    const modelBadge = $('modelBadge');
+    const modelSelect = $('modelSelect');
+    const ollamaUrlInput = $('ollamaUrl');
+    const temperatureInput = $('temperature');
+    const detectModelsBtn = $('detectModelsBtn');
+    const newChatBtn = $('newChatBtn');
+    const chatHistory = $('chatHistory');
+    const messages = $('messages');
+    const emptyState = $('emptyState');
+    const userInput = $('userInput');
+    const sendBtn = $('sendBtn');
+
+    // Toggle sidebar on mobile
+    menuBtn.addEventListener('click', () => sidebar.classList.toggle('hidden'));
+
+    // Admin modal
+    const openAdmin = () => {
+      ollamaUrlInput.value = state.ollamaUrl;
+      modelSelect.value = state.model;
+      temperatureInput.value = state.temperature;
+      adminModal.classList.add('visible');
+    };
+    const closeAdmin = () => adminModal.classList.remove('visible');
+
+    adminBtn.addEventListener('click', openAdmin);
+    modalClose.addEventListener('click', closeAdmin);
+    modalCancel.addEventListener('click', closeAdmin);
+    modalSave.addEventListener('click', () => {
+      state.ollamaUrl = ollamaUrlInput.value.trim().replace(/\/$/, '') || 'http://localhost:11434';
+      state.model = modelSelect.value || '';
+      state.temperature = parseFloat(temperatureInput.value) || 0.7;
+      localStorage.setItem('ollamaUrl', state.ollamaUrl);
+      localStorage.setItem('ollamaModel', state.model);
+      localStorage.setItem('ollamaTemperature', String(state.temperature));
+      closeAdmin();
+      updateModelBadge();
+      if (!state.model) detectModels();
+    });
+
+    // Detect Ollama models
+    async function detectModels() {
+      detectModelsBtn.disabled = true;
+      detectModelsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Detecting...';
+      const url = state.ollamaUrl;
+      modelSelect.innerHTML = '<option value="">— Detect models —</option>';
+      try {
+        const res = await fetch(`${url}/api/tags`, { signal: AbortSignal.timeout(5000) });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const models = (data.models || []).map(m => m.name);
+        if (models.length === 0) {
+          modelSelect.innerHTML = '<option value="">No models found</option>';
+          state.model = '';
+        } else {
+          modelSelect.innerHTML = '<option value="">— Select model —</option>' +
+            models.map(m => `<option value="${m}" ${m === state.model ? 'selected' : ''}>${m}</option>`).join('');
+          if (!state.model && models.length) state.model = models[0];
+          modelSelect.value = state.model;
+        }
+        updateModelBadge(true);
+      } catch (err) {
+        modelSelect.innerHTML = '<option value="">Ollama not reachable</option>';
+        state.model = '';
+        updateModelBadge(false);
+      }
+      detectModelsBtn.disabled = false;
+      detectModelsBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Detect models';
+    }
+
+    function updateModelBadge(connected = null) {
+      if (connected === true) {
+        modelBadge.textContent = state.model || 'No model';
+        modelBadge.className = 'model-badge connected';
+      } else if (connected === false) {
+        modelBadge.textContent = 'Ollama offline';
+        modelBadge.className = 'model-badge error';
+      } else {
+        modelBadge.textContent = state.model || 'No model';
+        modelBadge.className = 'model-badge';
+      }
+    }
+
+    detectModelsBtn.addEventListener('click', detectModels);
+
+    // New chat
+    newChatBtn.addEventListener('click', () => {
+      state.messages = [];
+      renderMessages();
+      emptyState.style.display = 'flex';
+      sidebar.classList.add('hidden');
+    });
+
+    // Send message
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text || state.isGenerating) return;
+      if (!state.model) {
+        alert('Please select an Ollama model in Settings.');
+        openAdmin();
+        return;
+      }
+
+      userInput.value = '';
+      userInput.style.height = 'auto';
+      emptyState.style.display = 'none';
+
+      state.messages.push({ role: 'user', content: text });
+      renderMessages();
+      scrollToBottom();
+
+      const assistantId = `msg-${Date.now()}`;
+      state.messages.push({ role: 'assistant', content: '', id: assistantId });
+      renderMessages();
+      scrollToBottom();
+
+      state.isGenerating = true;
+      sendBtn.disabled = true;
+
+      try {
+        const res = await fetch(`${state.ollamaUrl}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: state.model,
+            messages: state.messages.slice(0, -1).map(m => ({ role: m.role, content: m.content })),
+            stream: true,
+            options: { temperature: state.temperature }
+          })
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(errText || `HTTP ${res.status}`);
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let content = '';
+        const msg = state.messages.find(m => m.id === assistantId);
+        if (msg) msg.content = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n').filter(Boolean);
+          for (const line of lines) {
+            try {
+              const obj = JSON.parse(line);
+              if (obj.message?.content) {
+                content += obj.message.content;
+                if (msg) msg.content = content;
+                renderMessages();
+                scrollToBottom();
+              }
+            } catch (_) {}
+          }
+        }
+      } catch (err) {
+        const msg = state.messages.find(m => m.id === assistantId);
+        if (msg) msg.content = `Error: ${err.message}`;
+        renderMessages();
+      } finally {
+        state.isGenerating = false;
+        sendBtn.disabled = false;
+      }
+    }
+
+    function renderMessages() {
+      const html = state.messages.map(m => {
+        const isUser = m.role === 'user';
+        const content = m.content || (m.role === 'assistant' && state.isGenerating
+          ? '<div class="typing-indicator"><span></span><span></span><span></span></div>'
+          : '');
+        return `
+          <div class="message ${m.role}" data-id="${m.id || ''}">
+            <div class="message-avatar">
+              ${isUser ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>'}
+            </div>
+            <div class="message-content">
+              <div class="message-role">${isUser ? 'You' : 'Assistant'}</div>
+              <div class="message-text">${formatContent(content)}</div>
+            </div>
+          </div>`;
+      }).join('');
+      messages.innerHTML = html;
+      if (state.messages.length === 0) {
+        emptyState.style.display = 'flex';
+      } else {
+        emptyState.style.display = 'none';
+      }
+    }
+
+    function formatContent(text) {
+      if (!text) return '';
+      // Allow our typing indicator HTML through
+      if (String(text).includes('typing-indicator')) return text;
+      const escaped = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      return escaped
+        .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\n/g, '<br>');
+    }
+
+    function scrollToBottom() {
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    userInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Auto-resize textarea
+    userInput.addEventListener('input', () => {
+      userInput.style.height = 'auto';
+      userInput.style.height = Math.min(userInput.scrollHeight, 200) + 'px';
+    });
+
+    // Init
+    detectModels();
+    renderMessages();
+  </script>
+</body>
+</html>
